@@ -7,42 +7,36 @@ jobs:
   build-ios:
     name: 🎉 iOS Build
     runs-on: macos-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           architecture: x64
 
-      - name: Install Flutter dependencies
-        run: flutter pub get
+      - run: flutter pub get
 
-      - name: Set iOS deployment target to 13.0
+      - name: Ensure iOS platform is set to 13.0 in Podfile
         run: |
-          sed -i '' 's/platform :ios, .*/platform :ios, '\''13.0'\''/' ios/Podfile
+          if grep -q "platform :ios" ios/Podfile; then
+            sed -i '' 's/platform :ios.*/platform :ios, '\''13.0'\''/' ios/Podfile
+          else
+            sed -i '' '1s;^;platform :ios, '\''13.0'\''\n;' ios/Podfile
+          fi
 
-      - name: Clean and reinstall Pods
-        run: |
-          cd ios
-          rm -rf Pods Podfile.lock
-          pod install
+      - run: pod repo update
+        working-directory: ios
 
-      - name: Build iOS app (no codesign)
-        run: flutter build ios --release --no-codesign
+      - run: flutter build ios --release --no-codesign
 
-      - name: Create Payload directory
-        run: mkdir Payload
+      - run: mkdir Payload
         working-directory: build/ios/iphoneos
 
-      - name: Move Runner.app into Payload
-        run: mv Runner.app/ Payload
+      - run: mv Runner.app/ Payload
         working-directory: build/ios/iphoneos
 
-      - name: Zip .ipa file
+      - name: Zip output
         run: zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
