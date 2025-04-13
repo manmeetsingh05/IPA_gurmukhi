@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "353235625395",
+    "firebase_url": "https://impara-gurmu-default-rtdb.firebaseio.com",
+    "project_id": "impara-gurmu",
+    "storage_bucket": "impara-gurmu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353235625395:android:50537deff6288f80e057c6",
+        "android_client_info": {
+          "package_name": "com.example.impara_gurbani"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "353235625395-dqrbddig47vaj54etlc5ur7qt604r27d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRR14dJPMvF9yHPyVxrmz4zbGKjdTL40A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "353235625395-dqrbddig47vaj54etlc5ur7qt604r27d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "353235625395-0e4aupt55tpov17fpileiipdq1oqqbqa.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.imparaGurbani"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
