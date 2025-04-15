@@ -102,6 +102,9 @@ flutter:
   - "assets/SUONI/Dulenkarh/"
   - "assets/SUONI/error_sound.mp3"
   - "assets/images/"
+  - "assets/images/Uomo.png"
+  - "assets/images/Donna.png"
+  - "assets/images/Bambino.png"
   - "assets/png/"
   - "assets/gif/"
 
