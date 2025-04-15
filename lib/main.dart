@@ -12,16 +12,17 @@ import 'Scrittura/scrittura_page.dart';
 import 'Giochi/giochi_page.dart';
 import 'Metodi.dart';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<void> initializeFirebase() async {
-  if (kIsWeb) {
-    // Configurazione per web
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    // Configurazione per Android
+    await Firebase.initializeApp();
+  } else {
+    // Configurazione per tutte le altre piattaforme (iOS, Web, macOS, Windows, Linux)
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } else {
-    // Configurazione per mobile (Android/iOS)
-    await Firebase.initializeApp();
   }
 }
 
@@ -43,18 +44,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return MaterialApp(
       title: 'Impara Gurmukhi',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
-      home: FirebaseAuth.instance.currentUser == null ? const LoginPage() : const MyHomePage(title: 'Impara Gurmukhi'),
+      home: FirebaseAuth.instance.currentUser == null
+          ? const LoginPage()
+          : const MyHomePage(title: 'Impara Gurmukhi'),
     );
   }
 }
-
-
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -90,6 +91,14 @@ class _MyHomePageState extends State<MyHomePage> {
     Icons.account_circle,
     Icons.exit_to_app
   ];
+
+  Future<void> _launchHelpWebsite() async {
+    final Uri url =
+        Uri.parse('https://www.dalpanthitaly.com/'); // Sostituisci con il tuo URL
+    if (!await launchUrl(url)) {
+      throw Exception('Impossibile aprire $url');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,11 +173,11 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               onTap: () {
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsPage(),
-                    ),
-                  );
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
               },
             ),
             SizedBox(height: screenHeight * 0.45),
@@ -229,6 +238,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       builder: (context) => GiochiPage(),
                     ),
                   );
+                } else if (index == 3) {
+                  _launchHelpWebsite();
                 } else if (index == 4) {
                   if (isLoggedIn) {
                     Navigator.push(

@@ -257,14 +257,7 @@ class _PunjabiTracingPageState extends State<PunjabiTracingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Ricalca la lettera',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
-      ),
+      appBar: AppBarTitle('Ricalca la lettera'),
       body: errorMessage != null
           ? Center(
               child: Column(

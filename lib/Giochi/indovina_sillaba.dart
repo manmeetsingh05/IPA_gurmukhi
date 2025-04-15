@@ -140,135 +140,200 @@ class _PunjabiSyllableGameState extends State<PunjabiSyllableGame> {
   }
 
   void _showResult(bool isCorrect) {
-  _timer?.cancel();
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
+    _timer?.cancel();
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              isCorrect
-                  ? 'assets/images/right.png'
-                  : 'assets/images/wrong.png',
-              height: 150,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isCorrect ? "Corretto!" : "Sbagliato!",
-              style: textTheme.titleLarge?.copyWith(
-                color: colorScheme.onBackground,
-                fontWeight: FontWeight.bold,
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                isCorrect
+                    ? 'assets/images/right.png'
+                    : 'assets/images/wrong.png',
+                height: 150,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isCorrect
-                  ? "Hai indovinato la pronuncia!"
-                  : "La pronuncia corretta era: $_correctPronunciation",
-              style: textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onBackground,
+              const SizedBox(height: 16),
+              Text(
+                isCorrect ? "Corretto!" : "Sbagliato!",
+                style: textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onBackground,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                if (!isCorrect) {
-                  setState(() => _score = 0);
-                }
-                _generateSyllable();
-                _startTimer();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: colorScheme.secondary,
-                textStyle: textTheme.labelLarge,
+              const SizedBox(height: 12),
+              Text(
+                isCorrect
+                    ? "Hai indovinato la pronuncia!"
+                    : "La pronuncia corretta era: $_correctPronunciation",
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onBackground,
+                ),
+                textAlign: TextAlign.center,
               ),
-              child: const Text("Continua"),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  if (!isCorrect) {
+                    setState(() => _score = 0);
+                  }
+                  _generateSyllable();
+                  _startTimer();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.secondary,
+                  textStyle: textTheme.labelLarge,
+                ),
+                child: const Text("Continua"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return WillPopScope(
       onWillPop: () => UscitaGiochi(context),
       child: Scaffold(
+        backgroundColor: colorScheme.surface,
         appBar: AppBarTitle("Indovina la sillaba"),
-        body: Center(
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              16.0, 32.0, 16.0, 8.0), // 👈 più spazio sopra
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Punteggio: $_score",
-                  style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onBackground)),
-              Text("Punteggio massimo: $_maxScore",
-                  style: textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onBackground)),
-              SizedBox(height: 20),
-              Text("Tempo rimanente: ${_timeLeft.toInt()} secondi",
-                  style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-              SizedBox(height: 20),
-              Text(
-                _currentSyllable,
-                style: textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground),
-              ),
-              SizedBox(height: 20),
-              ..._options.map((option) {
-                final syllable = option.keys.first;
-                final pronunciation = option.values.first;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => _onOptionSelected(pronunciation),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          minimumSize: Size(200, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+              // Top bar: Max score a sinistra, timer a destra
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                            Border.all(color: colorScheme.primary, width: 1.5),
+                      ),
+                      child: Text(
+                        "Max: $_maxScore",
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularTimer(
+                          timeLeft: _timeLeft,
+                          maxTime: 15.0,
+                          size: 90,
+                        ),
+                        Text(
+                          "${_timeLeft.toInt()}",
+                          style: textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onBackground,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        child: Text(
-                          pronunciation,
-                          style: textTheme.titleMedium
-                              ?.copyWith(color: Colors.white),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Sezione centrale centrata
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Punteggio: $_score",
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onBackground,
                         ),
                       ),
-                      SizedBox(width: 10),
-                      IconButton(
-                        onPressed: () => _playAudio(syllable),
-                        icon: Icon(Icons.play_arrow),
-                        color: Theme.of(context).colorScheme.secondary,
-                        iconSize: 30,
+
+                      const SizedBox(height: 80), //
+                      Text(
+                        _currentSyllable,
+                        style: textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onBackground,
+                        ),
                       ),
+                      const SizedBox(
+                          height: 20), // 👈 spazio tra la sillaba e i tasti
+
+                      // Bottoni opzioni
+                      ..._options.map((option) {
+                        final syllable = option.keys.first;
+                        final pronunciation = option.values.first;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () =>
+                                    _onOptionSelected(pronunciation),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colorScheme.primary,
+                                  foregroundColor: colorScheme.onPrimary,
+                                  minimumSize: const Size(220, 55),
+                                  elevation: 6,
+                                  shadowColor: Colors.black26,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: Text(
+                                  pronunciation,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              IconButton(
+                                onPressed: () => _playAudio(syllable),
+                                icon: Icon(Icons.play_arrow),
+                                color: colorScheme.secondary,
+                                iconSize: 30,
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ],
                   ),
-                );
-              }).toList(),
+                ),
+              ),
             ],
           ),
         ),

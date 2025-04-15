@@ -1,9 +1,11 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:impara_gurbani/Tema.dart';
+
+
+
 
 class PunjabiLetterTile extends StatefulWidget {
   final String letter;
@@ -528,8 +530,10 @@ class CircularTimer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final progress = timeLeft / maxTime;
+    final progress = 1 - (timeLeft / maxTime);
     final angle = 2 * pi * progress;
+
+    final borderColor = theme.colorScheme.primary; // decidi qui il colore
 
     return SizedBox(
       width: size,
@@ -537,8 +541,9 @@ class CircularTimer extends StatelessWidget {
       child: CustomPaint(
         painter: _TimerPainter(
           angle: angle,
-          color: theme.colorScheme.secondary,
-          backgroundColor: theme.colorScheme.surface.withOpacity(0.3),
+          color: theme.colorScheme.surface.withOpacity(0.3),
+          backgroundColor: theme.colorScheme.secondary,
+          borderColor: borderColor,
         ),
       ),
     );
@@ -549,11 +554,13 @@ class _TimerPainter extends CustomPainter {
   final double angle;
   final Color color;
   final Color backgroundColor;
+  final Color borderColor;
 
   _TimerPainter({
     required this.angle,
     required this.color,
     required this.backgroundColor,
+    required this.borderColor,
   });
 
   @override
@@ -561,24 +568,35 @@ class _TimerPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    final paintBackground = Paint()..color = backgroundColor;
-    final paintFill = Paint()..color = color;
+    final paintFull = Paint()..color = backgroundColor;
+    final paintProgress = Paint()..color = color;
+    final paintBorder = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5;
 
-    // Disegna il cerchio di sfondo
-    canvas.drawCircle(center, radius, paintBackground);
+    // Cerchio pieno (parte rimanente)
+    canvas.drawCircle(center, radius, paintFull);
 
-    // Crea il settore colorato (parte rimasta)
-    final path = Path();
-    path.moveTo(center.dx, center.dy);
-    path.arcTo(Rect.fromCircle(center: center, radius: radius), -pi / 2, angle, false);
-    path.lineTo(center.dx, center.dy);
-    path.close();
-    canvas.drawPath(path, paintFill);
+    // Settore "trascorso"
+    if (angle > 0) {
+      final path = Path();
+      path.moveTo(center.dx, center.dy);
+      path.arcTo(Rect.fromCircle(center: center, radius: radius), -pi / 2, angle, false);
+      path.lineTo(center.dx, center.dy);
+      path.close();
+      canvas.drawPath(path, paintProgress);
+    }
+
+    // Cornice
+    canvas.drawCircle(center, radius - 2.5, paintBorder);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
+
+
 
 class AnimatedGridButton extends StatefulWidget {
   final String letter;
@@ -656,3 +674,4 @@ class _AnimatedGridButtonState extends State<AnimatedGridButton> {
     );
   }
 }
+

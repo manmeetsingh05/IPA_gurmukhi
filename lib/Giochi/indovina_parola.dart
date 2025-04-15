@@ -154,70 +154,69 @@ class _IndovinaParolaPageState extends State<IndovinaParolaPage> {
   }
 
   void _showResult(bool isCorrect) {
-  _timer?.cancel();
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
+    _timer?.cancel();
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              isCorrect
-                  ? 'assets/images/right.png'
-                  : 'assets/images/wrong.png',
-              height: 150,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isCorrect ? "Corretto!" : "Sbagliato!",
-              style: textTheme.titleLarge?.copyWith(
-                color: colorScheme.onBackground,
-                fontWeight: FontWeight.bold,
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                isCorrect
+                    ? 'assets/images/right.png'
+                    : 'assets/images/wrong.png',
+                height: 150,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isCorrect
-                  ? "Hai indovinato la parola!"
-                  : "La parola corretta era: $_correctWord",
-              style: textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onBackground,
+              const SizedBox(height: 16),
+              Text(
+                isCorrect ? "Corretto!" : "Sbagliato!",
+                style: textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onBackground,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                if (!isCorrect) {
-                  setState(() => _score = 0);
-                }
-                _generateWords();
-                _startTimer();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: colorScheme.secondary,
-                textStyle: textTheme.labelLarge,
+              const SizedBox(height: 12),
+              Text(
+                isCorrect
+                    ? "Hai indovinato la parola!"
+                    : "La parola corretta era: $_correctWord",
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onBackground,
+                ),
+                textAlign: TextAlign.center,
               ),
-              child: const Text("Continua"),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  if (!isCorrect) {
+                    setState(() => _score = 0);
+                  }
+                  _generateWords();
+                  _startTimer();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.secondary,
+                  textStyle: textTheme.labelLarge,
+                ),
+                child: const Text("Continua"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,63 +228,117 @@ class _IndovinaParolaPageState extends State<IndovinaParolaPage> {
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBarTitle("Indovina la parola"),
-        body: Center(
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              16.0, 32.0, 16.0, 8.0), // 👈 più spazio sopra
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                "Punteggio: $_score",
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onBackground,
-                ),
-              ),
-              Text(
-                "Punteggio massimo: $_maxScore",
-                style: textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onBackground,
-                ),
-              ),
-              SizedBox(height: 20),
-              CircularTimer(
-                timeLeft: _timeLeft,
-                maxTime: 15.0,
-                size: 150,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _playAudio,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.secondary,
-                  foregroundColor: colorScheme.onSecondary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Text("Riascolta audio", style: textTheme.labelLarge),
-              ),
-              SizedBox(height: 20),
-              ..._currentWords.map((word) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: ElevatedButton(
-                    onPressed: () => _onWordSelected(word),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      minimumSize: Size(200, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+              // Top bar: Max score a sinistra, timer a destra
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                            Border.all(color: colorScheme.primary, width: 1.5),
+                      ),
+                      child: Text(
+                        "Max: $_maxScore",
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      word,
-                      style:
-                          textTheme.titleMedium?.copyWith(color: Colors.white),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularTimer(
+                          timeLeft: _timeLeft,
+                          maxTime: 15.0,
+                          size: 90,
+                        ),
+                        Text(
+                          "${_timeLeft.toInt()}",
+                          style: textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onBackground,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
+                  ],
+                ),
+              ),
+
+              
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Punteggio: $_score",
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onBackground,
+                        ),
+                      ),
+                      const SizedBox(height: 80),
+                      ElevatedButton.icon(
+                        onPressed: _playAudio,
+                        icon: const Icon(Icons.volume_up),
+                        label: Text("Riascolta audio",
+                            style: textTheme.titleMedium),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.secondary,
+                          foregroundColor: colorScheme.onSecondary,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Bottoni parole
+                      ..._currentWords.map((word) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: ElevatedButton(
+                            onPressed: () => _onWordSelected(word),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
+                              minimumSize: const Size(220, 55),
+                              elevation: 6,
+                              shadowColor: Colors.black26,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              word,
+                              style: textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ),
-                );
-              }).toList(),
+                ),
+              ),
             ],
           ),
         ),
