@@ -219,7 +219,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
             radius: 60,
             backgroundColor: Colors.grey[200],
             backgroundImage:
-                profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
+                profileImageUrl != null ? AssetImage(profileImageUrl!) : null,
             child: profileImageUrl == null
                 ? Icon(Icons.person, size: 60, color: Colors.grey[600])
                 : null,
@@ -482,7 +482,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                       ),
                       child: CircleAvatar(
                         radius: 30,
-                        backgroundImage: NetworkImage(_predefinedImages[index]),
+                        backgroundImage: AssetImage(_predefinedImages[index]),
                       ),
                     ),
                   );
