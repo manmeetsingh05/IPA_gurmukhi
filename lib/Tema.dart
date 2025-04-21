@@ -1,18 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
+  static const String _themePreferenceKey = 'theme_preference';
 
   ThemeMode get themeMode => _themeMode;
 
-  void setThemeMode(ThemeMode mode) {
-    _themeMode = mode;
-    notifyListeners();
+  // Carica le preferenze del tema all'inizializzazione
+  Future<void> init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedTheme = prefs.getString(_themePreferenceKey);
+      
+      if (savedTheme != null) {
+        _themeMode = ThemeMode.values.firstWhere(
+          (e) => e.toString() == savedTheme,
+          orElse: () => ThemeMode.system,
+        );
+      } else {
+        // Default basato sulle preferenze di sistema
+        _themeMode = ThemeMode.system;
+      }
+      notifyListeners();
+    } catch (e) {
+      // Fallback in caso di errore
+      _themeMode = ThemeMode.system;
+      notifyListeners();
+    }
   }
 
-  void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+  // Imposta il tema e salva la preferenza
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
     notifyListeners();
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_themePreferenceKey, mode.toString());
+    } catch (e) {
+      // Ignora errori di salvataggio, il tema rimane comunque impostato in memoria
+    }
+  }
+
+  // Alterna tra light e dark mode
+  Future<void> toggleTheme() async {
+    if (_themeMode == ThemeMode.system) {
+      // Se è system, determiniamo il tema effettivo
+      final brightness = WidgetsBinding.instance.window.platformBrightness;
+      _themeMode = brightness == Brightness.dark ? ThemeMode.light : ThemeMode.dark;
+    } else {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    }
+    
+    await setThemeMode(_themeMode);
+  }
+
+  // Restituisce il tema effettivo (utile quando è impostato su system)
+  ThemeMode getEffectiveThemeMode() {
+    if (_themeMode == ThemeMode.system) {
+      final brightness = WidgetsBinding.instance.window.platformBrightness;
+      return brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light;
+    }
+    return _themeMode;
+  }
+
+  // Restituisce true se il tema attuale è dark (considerando anche system)
+  bool get isDarkMode {
+    if (_themeMode == ThemeMode.system) {
+      final brightness = WidgetsBinding.instance.window.platformBrightness;
+      return brightness == Brightness.dark;
+    }
+    return _themeMode == ThemeMode.dark;
   }
 }
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:impara_gurbani/Giochi/indovina_parola.dart';
 import 'package:impara_gurbani/Giochi/indovina_sillaba.dart';
 import 'package:impara_gurbani/Giochi/pronuncia_parola.dart';
+import 'package:impara_gurbani/Giochi/syllable_game.dart';
+import 'package:impara_gurbani/Giochi/words_game.dart';
 import 'package:impara_gurbani/Metodi.dart';
 
 class GiochiPage extends StatefulWidget {
@@ -20,7 +21,9 @@ class _GiochiPageState extends State<GiochiPage> {
         padding: const EdgeInsets.all(30.0),
         child: Column(
           children: [
-            BuildMenu(context, "Indovina la sillaba", Icons.font_download, PunjabiSyllableGame()),
+            BuildMenu(context, "Indovina la sillaba", Icons.font_download, IndovinaSillabaPage()),
+            const SizedBox(height: 12),
+            BuildMenu(context, "Riconosci la sillaba", Icons.spatial_audio_off_rounded, Sillable2()),
             const SizedBox(height: 12),
             BuildMenu(context, "Indovina la parola", Icons.abc, IndovinaParolaPage()),
             const SizedBox(height: 12),

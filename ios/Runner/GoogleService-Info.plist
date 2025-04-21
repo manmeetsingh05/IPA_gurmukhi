@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>353235625395-0e4aupt55tpov17fpileiipdq1oqqbqa.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.353235625395-0e4aupt55tpov17fpileiipdq1oqqbqa</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>353235625395-c1cm8govtsfrdaf3nr8an41e9o5sq380.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCd1lbIUAwxCKAqhCgB22v5EqOFRoOEVfY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>353235625395</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.imparaGurbani</string>
+	<key>PROJECT_ID</key>
+	<string>impara-gurmu</string>
+	<key>STORAGE_BUCKET</key>
+	<string>impara-gurmu.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:353235625395:ios:1a236e4fda29ddb0e057c6</string>
+	<key>DATABASE_URL</key>
+	<string>https://impara-gurmu-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>

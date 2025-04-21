@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart'; // Aggiunto import
+import 'package:impara_gurbani/Metodi.dart';
 import 'package:provider/provider.dart';
+import 'package:just_audio/just_audio.dart'; // Aggiunto import per AudioPlayer
+
 import 'firebase_options.dart';
-import 'Tema.dart'; // Importa la gestione del tema
-import 'Drawer Menu/LoginPage.dart';
-import 'Drawer Menu/SettingPage.dart';
-import 'Drawer Menu/MyAccount.dart';
+import 'Tema.dart';
+import 'Drawer%20Menu/LoginPage.dart'; // Usa %20 o rinomina la cartella senza spazi
+import 'Drawer%20Menu/SettingPage.dart';
+import 'Drawer%20Menu/MyAccount.dart';
 import 'Lettura/lettura_page.dart';
 import 'Scrittura/scrittura_page.dart';
 import 'Giochi/giochi_page.dart';
-import 'Metodi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// Importa i file dei servizi e delle pagine di gioco (assicurati che i percorsi siano corretti)
+import 'Giochi/funzioni.dart';
+// Potresti non aver bisogno di importare le pagine di gioco qui se la navigazione parte da GiochiPage
+// import 'Giochi/indovina_parola_page.dart';
+// import 'Giochi/indovina_sillaba_page.dart';
 
 Future<void> initializeFirebase() async {
   if (defaultTargetPlatform == TargetPlatform.android) {
@@ -26,15 +35,45 @@ Future<void> initializeFirebase() async {
   }
 }
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeFirebase();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    // *** INIZIO MODIFICA: Usa MultiProvider come radice ***
+    MultiProvider(
+      providers: [
+        // 1. Provider per il tema (il tuo esistente)
+        ChangeNotifierProvider<ThemeProvider>(
+          create: (_) => ThemeProvider()..init(),
+        ),
+
+        // 2. Provider per le istanze base (Firebase, AudioPlayer)
+        Provider<FirebaseAuth>.value(value: FirebaseAuth.instance),
+        Provider<FirebaseDatabase>.value(value: FirebaseDatabase.instance),
+        Provider<AudioPlayer>(
+          create: (_) => AudioPlayer(),
+          dispose: (_, player) => player.dispose(), // Gestisce il dispose
+        ),
+
+        // 3. Provider per i servizi che dipendono dalle istanze base
+        //    (Usa ProxyProvider per iniettare le dipendenze)
+        ProxyProvider<AudioPlayer, AudioService>(
+          update: (_, audioPlayer, previousAudioService) =>
+              AudioService(audioPlayer),
+          // Non serve dispose qui, l'AudioPlayer è gestito sopra
+        ),
+        ProxyProvider2<FirebaseAuth, FirebaseDatabase, ScoreService>(
+          update: (_, auth, database, previousScoreService) =>
+              ScoreService(auth, database),
+        ),
+      ],
+      // Il child del MultiProvider è MyApp, che costruirà MaterialApp
+      // In questo modo, MaterialApp e tutte le sue pagine avranno accesso ai provider
       child: const MyApp(),
     ),
+    // *** FINE MODIFICA ***
   );
 }
 
@@ -43,6 +82,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ora possiamo accedere a ThemeProvider perché è fornito da MultiProvider
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
@@ -50,12 +90,25 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
+      // La logica per decidere la home page rimane invariata
       home: FirebaseAuth.instance.currentUser == null
           ? const LoginPage()
           : const MyHomePage(title: 'Impara Gurmukhi'),
+      // Se usi named routes, assicurati che siano definite qui
+      // routes: {
+      //   '/giochi': (context) => GiochiPage(),
+      //   '/lettura': (context) => LetturaPage(),
+      //   ... altre routes
+      // }
     );
   }
 }
+
+// Il resto del codice (MyHomePage, _MyHomePageState, ecc.) rimane invariato
+// perché la logica di costruzione dell'UI e della navigazione è corretta.
+// Quando navighi verso GiochiPage (e da lì ai giochi specifici),
+// queste pagine saranno costruite all'interno del contesto di MaterialApp
+// e quindi avranno accesso ai provider definiti nel MultiProvider.
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -69,34 +122,37 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Controlla lo stato di autenticazione dell'utente
   bool get isLoggedIn => FirebaseAuth.instance.currentUser != null;
 
-  // Lista dei titoli dei pulsanti
   final List<String> buttonTitles = [
     'Lettura',
     'Scrittura',
     'Giochi',
     'Aiuto',
-    'Profilo',
-    'Esci'
   ];
 
-  // Lista delle icone corrispondenti ai pulsanti
   final List<IconData> buttonIcons = [
     Icons.book,
     Icons.note_alt,
     Icons.videogame_asset,
     Icons.help,
-    Icons.account_circle,
-    Icons.exit_to_app
   ];
 
   Future<void> _launchHelpWebsite() async {
-    final Uri url =
-        Uri.parse('https://www.dalpanthitaly.com/'); // Sostituisci con il tuo URL
-    if (!await launchUrl(url)) {
-      throw Exception('Impossibile aprire $url');
+    final Uri url = Uri.parse('https://www.dalpanthitaly.com/');
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        print('Impossibile aprire $url');
+        // Considera di mostrare un messaggio all'utente qui
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossibile aprire il sito web.')),
+        );
+      }
+    } catch (e) {
+      print('Errore durante l\'apertura di $url: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore nell\'apertura del sito web.')),
+      );
     }
   }
 
@@ -105,19 +161,24 @@ class _MyHomePageState extends State<MyHomePage> {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final effectiveThemeMode = themeProvider.getEffectiveThemeMode();
 
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBarTitle('Impara Gurmukhi'),
       drawer: Drawer(
-        shadowColor: AppTheme.secondaryColor,
-        child: ListView(
-          padding: EdgeInsets.zero,
+        surfaceTintColor: theme.colorScheme.surfaceTint,
+        // *** INIZIO MODIFICA: Usa Column invece di ListView ***
+        child: Column(
           children: [
-            Container(
-              color: AppTheme.secondaryColor,
-              height: 340,
+            // Parte Superiore (Header e Riga) - Non cambia
+            SizedBox(
+              height: 300,
+              width: 310,
               child: DrawerHeader(
+                padding: EdgeInsets.zero,
+                margin: EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                 ),
@@ -126,158 +187,177 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Text(
                       'Impara Gurmukhi',
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        color: Colors.white,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                     const SizedBox(height: 15),
                     Image.asset(
                       'assets/images/dalpanth.png',
-                      height: 200,
-                      width: 200,
+                      height: 180,
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            Container(
+              height: 10.0,
+              width: double.infinity,
+              color: theme.colorScheme.secondary,
+            ),
+            const SizedBox(height: 15),
+            // Voci di Menu - Non cambiano
             ListTile(
-              leading: Icon(Icons.person, color: theme.colorScheme.onSurface),
+              leading:
+                  Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
               title: Text(
                 'Profilo',
-                style: theme.textTheme.bodyMedium,
+                style: theme.textTheme.titleMedium,
               ),
               onTap: () {
+                Navigator.pop(context); // Chiudi drawer
                 if (isLoggedIn) {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AccountManagementPage(),
-                    ),
-                  );
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AccountManagementPage()));
                 } else {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
-                  );
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()));
                 }
               },
             ),
             ListTile(
-              leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+              leading: Icon(Icons.settings,
+                  color: theme.colorScheme.onSurfaceVariant),
               title: Text(
                 'Impostazioni',
-                style: theme.textTheme.bodyLarge,
+                style: theme.textTheme.titleMedium,
               ),
               onTap: () {
+                Navigator.pop(context); // Chiudi drawer
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsPage(),
-                  ),
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()));
               },
             ),
-            SizedBox(height: screenHeight * 0.45),
+
+            // *** MODIFICA: Usa Spacer per spingere il testo della versione in fondo ***
+            const Spacer(), // Occupa tutto lo spazio verticale rimanente
+
+            // Testo della Versione (ora in fondo)
             Padding(
-              padding: const EdgeInsets.all(AppTheme.defaultPadding),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Text(
-                  'Versione 1.0.0',
-                  style: theme.textTheme.bodySmall,
-                ),
+              padding: const EdgeInsets.all(16.0), // Padding attorno al testo
+              child: Text(
+                'Versione 1.0.0',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.outline),
+                textAlign: TextAlign.center,
               ),
             ),
+            // const SizedBox(height: 10), // Puoi rimuovere o tenere questo spazio sotto la versione
+            // Aggiungi un piccolo SafeArea per evitare che il testo vada sotto la barra di sistema inferiore, se presente
+            SafeArea(
+              top: false, // Solo il fondo
+              child: const SizedBox(
+                  height: 5), // Piccolo spazio aggiuntivo se necessario
+            )
           ],
         ),
+        // *** FINE MODIFICA ***
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.1,
-          vertical: screenHeight * 0.05,
-        ),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 20,
-            mainAxisSpacing: 20,
+      body: Container(
+        // ... (Codice del body invariato) ...
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(
+              effectiveThemeMode == ThemeMode.dark
+                  ? "assets/images/SfondoDark.png"
+                  : "assets/images/SfondoLight.png",
+            ),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.7),
+              BlendMode.dstATop,
+            ),
           ),
-          itemCount: buttonTitles.length,
-          itemBuilder: (context, index) {
-            return ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.background,
-                foregroundColor: theme.colorScheme.onSurface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.1,
+            vertical: screenHeight * 0.05,
+          ),
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: buttonTitles.length,
+            itemBuilder: (context, index) {
+              return ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      theme.colorScheme.surfaceVariant.withOpacity(0.85),
+                  foregroundColor: theme.colorScheme.onSurfaceVariant,
+                  shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.buttonRadius),
+                      side: BorderSide(
+                          color: theme.colorScheme.outline.withOpacity(0.3))),
+                  elevation: 3,
                 ),
-                elevation: 5,
-              ),
-              onPressed: () {
-                if (index == 0) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LetturaPage(),
-                    ),
-                  );
-                } else if (index == 1) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ScritturaPage(),
-                    ),
-                  );
-                } else if (index == 2) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GiochiPage(),
-                    ),
-                  );
-                } else if (index == 3) {
-                  _launchHelpWebsite();
-                } else if (index == 4) {
-                  if (isLoggedIn) {
+                onPressed: () {
+                  Widget? nextPage;
+                  switch (index) {
+                    case 0:
+                      nextPage = const LetturaPage();
+                      break;
+                    case 1:
+                      nextPage = const ScritturaPage();
+                      break;
+                    case 2:
+                      nextPage = GiochiPage();
+                      break;
+                    case 3:
+                      _launchHelpWebsite();
+                      break;
+                  }
+
+                  if (nextPage != null) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const AccountManagementPage(),
-                      ),
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
+                      MaterialPageRoute(builder: (context) => nextPage!),
                     );
                   }
-                }
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    buttonIcons[index],
-                    size: screenWidth * 0.08,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    buttonTitles[index],
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      buttonIcons[index],
+                      size: screenWidth * 0.1,
+                      color: theme.brightness == Brightness.dark
+                          ? theme.colorScheme.secondary // Colore per tema scuro
+                          : theme.colorScheme.primary,
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                    const SizedBox(height: 12),
+                    Text(
+                      buttonTitles[index],
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

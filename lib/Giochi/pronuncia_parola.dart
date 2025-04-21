@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:impara_gurbani/Metodi.dart';
 import 'package:impara_gurbani/LISTE.dart';
-import 'package:impara_gurbani/Giochi/game_utils.dart';
+import 'package:impara_gurbani/Giochi/old/game_utils.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:just_audio/just_audio.dart';

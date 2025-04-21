@@ -17,7 +17,8 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
   late String email;
   String? profileImageUrl;
   bool _isLoading = false;
-
+  late ThemeData theme;
+  
   @override
   void initState() {
     super.initState();
@@ -25,19 +26,12 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
   }
 
   void _loadUserData() {
-    var user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      setState(() {
-        username = user.displayName ?? "No name provided";
-        email = user.email ?? "No email provided";
-        profileImageUrl = user.photoURL;
-      });
-    } else {
-      setState(() {
-        username = "No name provided";
-        email = "No email provided";
-      });
-    }
+    final user = FirebaseAuth.instance.currentUser;
+    setState(() {
+      username = user?.displayName ?? "No name provided";
+      email = user?.email ?? "No email provided";
+      profileImageUrl = user?.photoURL;
+    });
   }
 
   Future<void> _editAccountDetails() async {
@@ -50,9 +44,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
     );
 
     if (result != null && result is Map<String, dynamic>) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
         final user = FirebaseAuth.instance.currentUser;
@@ -68,24 +60,12 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
           await user.reload();
           _loadUserData();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Profile updated successfully"),
-              backgroundColor: Colors.green,
-            ),
-          );
+          _showSuccessSnackbar("Profile updated successfully");
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error updating profile: ${e.toString()}"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showErrorSnackbar("Error updating profile: ${e.toString()}");
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -97,9 +77,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
     );
 
     if (result != null && result is Map<String, String>) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
         final user = FirebaseAuth.instance.currentUser;
@@ -112,73 +90,74 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
           await user.reauthenticateWithCredential(credential);
           await user.updatePassword(result['newPassword']!);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Password changed successfully"),
-              backgroundColor: Colors.green,
-            ),
-          );
+          _showSuccessSnackbar("Password changed successfully");
           Navigator.of(context).pop();
         }
       } on FirebaseAuthException catch (e) {
-        String errorMessage = "Error changing password";
-        if (e.code == 'wrong-password') {
-          errorMessage = "Current password is incorrect";
-        } else if (e.code == 'weak-password') {
-          errorMessage = "New password is too weak";
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _handlePasswordError(e);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error changing password: ${e.toString()}"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showErrorSnackbar("Error changing password: ${e.toString()}");
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _handlePasswordError(FirebaseAuthException e) {
+    String errorMessage = "Error changing password";
+    if (e.code == 'wrong-password') {
+      errorMessage = "Current password is incorrect";
+    } else if (e.code == 'weak-password') {
+      errorMessage = "New password is too weak";
+    }
+    _showErrorSnackbar(errorMessage);
+  }
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.accentColor,
+      ),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.errorColor,
+      ),
+    );
   }
 
   void _logout() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Logout"),
-        content: Text("Are you sure you want to logout?"),
+        title: Text("Logout", style: Theme.of(context).textTheme.titleLarge),
+        content: Text("Are you sure you want to logout?", 
+          style: Theme.of(context).textTheme.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              "Cancel",
-              style: TextStyle(
-                  color: AppTheme.secondaryColor), // Testo con secondaryColor
-            ),
+            child: Text("Cancel", style: TextStyle(color: AppTheme.secondaryColor)),
           ),
           TextButton(
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => MyApp()),
-                (route) => false,
-              );
-            },
-            child: Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
+            onPressed: _confirmLogout,
+            child: Text("Logout", style: TextStyle(color: AppTheme.errorColor)),
+          )
+          
         ],
       ),
+    );
+  }
+
+  void _confirmLogout() {
+    FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => MyApp()),
+      (route) => false,
     );
   }
 
@@ -191,12 +170,13 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    theme = Theme.of(context);
     return Scaffold(
       appBar: AppBarTitle('Account'),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppTheme.defaultPadding),
               child: Column(
                 children: [
                   _buildProfileHeader(),
@@ -217,27 +197,19 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
           onTap: _editAccountDetails,
           child: CircleAvatar(
             radius: 60,
-            backgroundColor: Colors.grey[200],
-            backgroundImage:
-                profileImageUrl != null ? AssetImage(profileImageUrl!) : null,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundImage: profileImageUrl != null ? AssetImage(profileImageUrl!) : null,
             child: profileImageUrl == null
-                ? Icon(Icons.person, size: 60, color: Colors.grey[600])
+                ? Icon(Icons.person, size: 60, color: Theme.of(context).colorScheme.onSurface)
                 : null,
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          username,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        Text(
-          email,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
-        ),
+        Text(username, style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 4),
+        Text(email, style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        )),
       ],
     );
   }
@@ -246,8 +218,9 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
+      color: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -291,29 +264,20 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Icon(icon, size: 24, color: Colors.grey[600]),
+            Icon(icon, size: AppTheme.iconSize, color: Theme.of(context).colorScheme.onSurface),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
-                  ),
+                  Text(title, style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
+                  Text(value, style: Theme.of(context).textTheme.bodyLarge),
                 ],
               ),
             ),
             if (isSensitive)
-              Icon(Icons.chevron_right_outlined,
-                  size: 20, color: Colors.grey[400]),
+              Icon(Icons.chevron_right_outlined, size: 20, color: Theme.of(context).disabledColor),
           ],
         ),
       ),
@@ -338,14 +302,14 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
         _buildActionButton(
           icon: Icons.logout_outlined,
           title: "Logout",
-          color: Colors.red,
+          color: AppTheme.errorColor,
           onTap: _logout,
         ),
         const SizedBox(height: 12),
         _buildActionButton(
           icon: Icons.delete_outline,
           title: "Delete Account",
-          color: Colors.red,
+          color: AppTheme.errorColor,
           onTap: _deleteAccount,
         ),
       ],
@@ -360,34 +324,32 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTheme.cardRadius),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 6,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Row(
           children: [
-            Icon(icon, color: color ?? AppTheme.primaryColor),
+            Icon(icon, color: color ?? (theme.brightness == Brightness.dark
+             ? theme.colorScheme.secondary // Colore per tema scuro
+             : theme.colorScheme.primary   // Colore per tema chiaro
+         ),),
             const SizedBox(width: 16),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color:
-                        color ?? Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-            ),
-            Spacer(),
-            Icon(Icons.chevron_right_outlined,
-                color: Theme.of(context).disabledColor),
+            Text(title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: color ?? Theme.of(context).textTheme.bodyLarge?.color,
+            )),
+            const Spacer(),
+            Icon(Icons.chevron_right_outlined, color: Theme.of(context).disabledColor),
           ],
         ),
       ),
@@ -436,128 +398,107 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
-      insetPadding: const EdgeInsets.all(20),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Edit Profile",
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.defaultPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Edit Profile", style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 24),
+            Text("Choose your avatar", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: _predefinedImages.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedImageUrl = _predefinedImages[index]),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: _selectedImageUrl == _predefinedImages[index]
+                          ? Border.all(color: AppTheme.primaryColor, width: 3)
+                          : null,
+                      borderRadius: BorderRadius.circular(50),
                     ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                "Choose your avatar",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundImage: AssetImage(_predefinedImages[index]),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: "Username",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                 ),
-                itemCount: _predefinedImages.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedImageUrl = _predefinedImages[index];
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: _selectedImageUrl == _predefinedImages[index]
-                            ? Border.all(color: AppTheme.primaryColor, width: 3)
-                            : null,
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundImage: AssetImage(_predefinedImages[index]),
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                       ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: "Username",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    child: Text("Cancel", style: TextStyle(color: AppTheme.secondaryColor)),
                   ),
-                  prefixIcon: Icon(Icons.person_outline),
                 ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                            color: AppTheme
-                                .secondaryColor), // Testo con secondaryColor
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                       ),
                     ),
+                    child: Text("Save", style: TextStyle(color: Colors.white)),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_usernameController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Username cannot be empty"),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-
-                        Navigator.pop(context, {
-                          'username': _usernameController.text,
-                          'imageUrl': _selectedImageUrl,
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "Save",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  void _saveProfile() {
+    if (_usernameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Username cannot be empty"),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context, {
+      'username': _usernameController.text,
+      'imageUrl': _selectedImageUrl,
+    });
   }
 }
 
@@ -589,113 +530,43 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.defaultPadding),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "Change Password",
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
+              Text("Change Password", style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 24),
-              TextFormField(
+              _buildPasswordField(
                 controller: _currentPasswordController,
+                label: "Current Password",
                 obscureText: _obscureCurrentPassword,
-                decoration: InputDecoration(
-                  labelText: "Current Password",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureCurrentPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureCurrentPassword = !_obscureCurrentPassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your current password';
-                  }
-                  return null;
-                },
+                onToggleVisibility: () => setState(() => _obscureCurrentPassword = !_obscureCurrentPassword),
+                validator: (value) => value?.isEmpty ?? true ? 'Please enter your current password' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _buildPasswordField(
                 controller: _newPasswordController,
+                label: "New Password",
                 obscureText: _obscureNewPassword,
-                decoration: InputDecoration(
-                  labelText: "New Password",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureNewPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureNewPassword = !_obscureNewPassword;
-                      });
-                    },
-                  ),
-                ),
+                onToggleVisibility: () => setState(() => _obscureNewPassword = !_obscureNewPassword),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a new password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
+                  if (value?.isEmpty ?? true) return 'Please enter a new password';
+                  if (value!.length < 6) return 'Password must be at least 6 characters';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _buildPasswordField(
                 controller: _confirmPasswordController,
+                label: "Confirm New Password",
                 obscureText: _obscureConfirmPassword,
-                decoration: InputDecoration(
-                  labelText: "Confirm New Password",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirmPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureConfirmPassword = !_obscureConfirmPassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value != _newPasswordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
+                onToggleVisibility: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                validator: (value) => value != _newPasswordController.text ? 'Passwords do not match' : null,
               ),
               const SizedBox(height: 24),
               Row(
@@ -706,39 +577,24 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                         ),
                       ),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                            color: AppTheme
-                                .secondaryColor), // Testo con secondaryColor
-                      ),
+                      child: Text("Cancel", style: TextStyle(color: AppTheme.secondaryColor)),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          Navigator.pop(context, {
-                            'currentPassword': _currentPasswordController.text,
-                            'newPassword': _newPasswordController.text,
-                          });
-                        }
-                      },
+                      onPressed: _submitPasswordChange,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                         ),
                       ),
-                      child: Text(
-                        "Change Password",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: Text("Change Password", style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],
@@ -748,6 +604,40 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
         ),
       ),
     );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscureText,
+    required VoidCallback onToggleVisibility,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
+        ),
+        prefixIcon: Icon(Icons.lock_outline),
+        suffixIcon: IconButton(
+          icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
+          onPressed: onToggleVisibility,
+        ),
+      ),
+      validator: validator,
+    );
+  }
+
+  void _submitPasswordChange() {
+    if (_formKey.currentState!.validate()) {
+      Navigator.pop(context, {
+        'currentPassword': _currentPasswordController.text,
+        'newPassword': _newPasswordController.text,
+      });
+    }
   }
 }
 
@@ -770,23 +660,20 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
   }
 
   void _startCountdown() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_counter > 0) {
-        setState(() {
-          _counter--;
-        });
+        setState(() => _counter--);
       } else {
-        setState(() {
-          _isButtonEnabled = true;
-        });
+        setState(() => _isButtonEnabled = true);
         _timer.cancel();
       }
-    });
+    }
+    );
   }
 
   Future<void> _deleteAccount() async {
     try {
-      var user = FirebaseAuth.instance.currentUser;
+      final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         await user.delete();
         Navigator.of(context).pushAndRemoveUntil(
@@ -796,7 +683,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Account deleted successfully"),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.accentColor,
           ),
         );
       }
@@ -804,7 +691,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error deleting account: ${e.toString()}"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
     }
@@ -814,26 +701,18 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.defaultPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              size: 60,
-              color: Colors.red,
-            ),
+            Icon(Icons.warning_amber_rounded, size: 60, color: AppTheme.errorColor),
             const SizedBox(height: 16),
-            Text(
-              "Delete Account?",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-            ),
+            Text("Delete Account?", style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: AppTheme.errorColor,
+            )),
             const SizedBox(height: 16),
             Text(
               "This action is irreversible. All your data will be permanently deleted.",
@@ -844,23 +723,17 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                color: AppTheme.errorColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
               ),
               child: Column(
                 children: [
-                  Text(
-                    "Confirmation will be enabled in:",
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text("Confirmation will be enabled in:", 
+                    style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
-                  Text(
-                    "$_counter seconds",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                  ),
+                  Text("$_counter seconds", style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppTheme.errorColor,
+                  )),
                 ],
               ),
             ),
@@ -876,15 +749,10 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                       ),
                     ),
-                    child: Text(
-                      "Cancel",
-                      style: TextStyle(
-                          color: AppTheme
-                              .secondaryColor), // Testo con secondaryColor
-                    ),
+                    child: Text("Cancel", style: TextStyle(color: AppTheme.secondaryColor)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -892,18 +760,14 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                   child: ElevatedButton(
                     onPressed: _isButtonEnabled ? _deleteAccount : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isButtonEnabled
-                          ? Colors.red
-                          : Color.fromARGB(255, 228, 120, 120),
+                      backgroundColor: _isButtonEnabled ? AppTheme.errorColor : 
+                        AppTheme.errorColor.withOpacity(0.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
                       ),
                     ),
-                    child: Text(
-                      "Delete",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: Text("Delete", style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

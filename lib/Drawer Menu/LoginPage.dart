@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart'; // Aggiungi l'import per GoogleSignIn
-import '../main.dart';
-import 'SignUpPage.dart';
-import 'RecuperoPassword.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import '../main.dart'; // Assicurati che MyHomePage sia in main.dart
+import 'SignUpPage.dart'; // Assicurati che SignUpPage sia in SignUpPage.dart
+import 'RecuperoPassword.dart'; // Assicurati che PasswordResetPage sia in RecuperoPassword.dart
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,12 +16,12 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
+  final _googleSignIn = GoogleSignIn(); // Ricorda la configurazione Client ID per web/android/ios
 
-  // Variabili per gestire lo stato di caricamento e gli errori
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // Funzione per il login con Google
+  // --- LOGIN CON GOOGLE ---
   Future<void> _loginWithGoogle() async {
     setState(() {
       _isLoading = true;
@@ -29,283 +29,344 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId:
-            '353235625395-dqrbddig47vaj54etlc5ur7qt604r27d.apps.googleusercontent.com',
-      );
+      // Esegui il sign-out da eventuali sessioni Google precedenti
+      await _googleSignIn.signOut();
 
-      await googleSignIn.signOut(); // Disconnette eventuali sessioni precedenti
+      // Avvia il flusso di login con Google
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
+      // Se l'utente annulla
       if (googleUser == null) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         return;
       }
 
-      // 1. VERIFICA SE L'EMAIL È GIÀ REGISTRATA CON PASSWORD
-      final String googleEmail = googleUser.email;
-      final List<String> providers =
-          await FirebaseAuth.instance.fetchSignInMethodsForEmail(googleEmail);
-
-      // Se esiste già un account con password (e non è Google)
-      if (providers.contains('password')) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage =
-              'Account già registrato con email/password. Per favore accedi con email e password.';
-        });
-        await googleSignIn.signOut();
-        return;
-      }
-
-      // 2. SE NON ESISTE O È GIÀ REGISTRATO CON GOOGLE, PROCEDI
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      // Ottieni le credenziali Auth
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
+      // **CONTROLLO PREVENTIVO**: Verifica se l'email è già registrata con un altro metodo
+      final List<String> signInMethods = await _auth.fetchSignInMethodsForEmail(googleUser.email);
 
-      // 3. GESTIONE USERNAME SE NECESSARIO
-      if (userCredential.user != null &&
-          userCredential.user!.displayName == null) {
-        _showUsernameDialog(userCredential.user!);
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const MyHomePage(title: 'Impara Gurmukhi')),
-        );
+      if (signInMethods.isNotEmpty && !signInMethods.contains(GoogleAuthProvider.PROVIDER_ID)) {
+        // L'utente esiste già con un altro metodo (es. email/password)
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Account già registrato con email/password. Accedi con quel metodo.';
+        });
+        await _googleSignIn.signOut(); // Disconnetti da Google
+        return; // Interrompi
       }
+
+      // Prosegui con l'accesso a Firebase
+      await _auth.signInWithCredential(credential);
+
+      // Login avvenuto con successo, vai alla home
+      _navigateToHome();
+
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = _mapFirebaseError(e);
-      });
+       await _handleGoogleLoginError(e); // Gestisci errori Firebase specifici
     } catch (e) {
+      // Gestisci altri errori (configurazione ClientID, rete, ecc.)
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Errore durante l\'accesso con Google';
+        // Mostra un messaggio generico o l'errore specifico se utile per il debug
+        _errorMessage = 'Errore durante l\'accesso con Google. Verifica la configurazione.';
+        // Logga l'errore per debug: print('Google Sign-In Error: ${e.toString()}');
       });
+      await _googleSignIn.signOut(); // Disconnetti in caso di errore
+    } finally {
+       // Assicurati che il loading sia false se non è già stato gestito
+       if(mounted && _isLoading){
+         setState(() => _isLoading = false);
+       }
     }
   }
 
-  String _mapFirebaseError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'account-exists-with-different-credential':
-        return 'Esiste già un account con questa email registrato tramite email/password';
-      case 'invalid-credential':
-        return 'Credenziali Google non valide';
-      case 'operation-not-allowed':
-        return 'Accesso con Google non abilitato';
-      default:
-        return 'Errore durante l\'accesso: ${e.message}';
-    }
-  }
-
-  void _showUsernameDialog(User? user) {
-    TextEditingController usernameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Crea il tuo username'),
-          content: TextField(
-            controller: usernameController,
-            decoration: const InputDecoration(
-              labelText: 'Username',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Annulla'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // Aggiorna il displayName dell'utente su Firebase
-                try {
-                  await user?.updateDisplayName(usernameController.text);
-                  await user?.reload(); // Ricarica l'utente solo se non è nullo
-                  user = FirebaseAuth
-                      .instance.currentUser; // Ritorna l'utente aggiornato
-                  Navigator.of(context).pop();
-
-                  // Naviga alla home
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const MyHomePage(title: 'Impara Gurmukhi')),
-                  );
-                } catch (e) {
-                  setState(() {
-                    _errorMessage = 'Errore durante l\'aggiornamento del nome';
-                  });
-                }
-              },
-              child: const Text('Salva'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Funzione per il login con email e password
+  // --- LOGIN CON EMAIL/PASSWORD ---
   Future<void> _login() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Per favore, inserisci sia email che password.';
+      });
+      return;
+    }
+
     try {
-      // Effettua il login con email e password
+      // **CONTROLLO PREVENTIVO**: Verifica se l'email è già registrata con Google
+      final List<String> signInMethods = await _auth.fetchSignInMethodsForEmail(email);
+
+      if (signInMethods.contains(GoogleAuthProvider.PROVIDER_ID)) {
+         // Esiste un account Google collegato a questa email.
+         setState(() {
+           _isLoading = false;
+           _errorMessage = 'Questa email è collegata a un account Google. Per favore, usa il pulsante "Accedi con Google".';
+         });
+         return; // Interrompi
+      }
+
+      // Se il controllo è superato, procedi con il login email/password
       await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: email,
+        password: password,
       );
-      // Se il login ha successo, naviga alla home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const MyHomePage(
-                title:
-                    'Impara Gurmukhi')), // Modifica in base alla tua home page
-      );
+      _navigateToHome(); // Login riuscito
+
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = e.message ?? 'Errore sconosciuto';
+        _errorMessage = _mapLoginError(e); // Mappa errore Firebase
       });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Si è verificato un errore imprevisto.';
+         // Logga l'errore per debug: print('Email/Pass Login Error: ${e.toString()}');
+      });
+    } finally {
+        // Assicurati che il loading sia false se non è già stato gestito
+       if(mounted && _isLoading){
+         setState(() => _isLoading = false);
+       }
     }
   }
 
+  // --- HELPERS ---
+
+  // Gestione errori specifici Google Sign-In con Firebase
+  Future<void> _handleGoogleLoginError(FirebaseAuthException e) async {
+     String errorMessage;
+     switch (e.code) {
+       case 'account-exists-with-different-credential':
+         // Questo caso dovrebbe essere già coperto dal controllo preventivo, ma lo teniamo per sicurezza
+         errorMessage = 'Esiste già un account con questa email ma credenziali diverse.';
+         break;
+       case 'invalid-credential':
+         errorMessage = 'Credenziali Google non valide o scadute. Riprova.';
+         break;
+       case 'operation-not-allowed':
+          errorMessage = 'Accesso con Google non abilitato nel tuo progetto Firebase.';
+          break;
+       case 'user-disabled':
+         errorMessage = 'Questo account utente è stato disabilitato.';
+         break;
+       case 'user-not-found':
+         errorMessage = 'Nessun utente trovato per queste credenziali Google.';
+         break;
+       default:
+         errorMessage = 'Errore Firebase: ${e.message ?? e.code}';
+     }
+     setState(() {
+       _isLoading = false;
+       _errorMessage = errorMessage;
+     });
+     await _googleSignIn.signOut();
+  }
+
+  // Mappa errori comuni di login email/password
+  String _mapLoginError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'Formato email non valido.';
+      case 'user-disabled':
+        return 'Questo account è stato disabilitato.';
+      case 'user-not-found':
+        // Dopo il nostro controllo preventivo, questo significa "non trovato con password"
+        return 'Nessun account trovato per questa combinazione email/password.';
+      case 'wrong-password':
+        return 'Password errata.';
+      case 'invalid-credential': // Più generico per credenziali errate
+         return 'Credenziali non valide (email o password errate).';
+      default:
+        // Restituisci un messaggio generico o il codice/messaggio Firebase per debug
+        return 'Errore durante l\'accesso: ${e.message ?? e.code}';
+    }
+  }
+
+  // Naviga alla pagina principale
+  void _navigateToHome() {
+     if (!mounted) return; // Controllo sicurezza
+     Navigator.of(context).pushReplacement(
+       MaterialPageRoute(
+         builder: (context) => const MyHomePage(title: 'Impara Gurmukhi'),
+       ),
+     );
+  }
+
+  // Naviga alla pagina di registrazione
+  void _navigateToSignUp() {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignUpPage()),
+    );
+  }
+
+  // Naviga alla pagina di recupero password
+  void _navigateToPasswordReset() {
+     if (!mounted) return;
+     Navigator.push(
+       context,
+       MaterialPageRoute(builder: (context) => const PasswordResetPage()),
+     );
+  }
+
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // --- WIDGET BUILD ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Logo o icona
-            Image.asset(
-              'assets/images/dalpanth.png',
-              height: 300,
-              width: 300,
-            ),
-            const SizedBox(height: 30),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Logo
+                  Image.asset(
+                    'assets/images/dalpanth.png', // Assicurati che il path sia corretto
+                    height: 200,
+                  ),
+                  const SizedBox(height: 40),
 
-            // Email Input
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 20),
-
-            // Password Input
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-              ),
-              obscureText: true,
-            ),
-
-            // Aggiungi questo widget per "Password dimenticata?"
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PasswordResetPage(),
+                  // Campo Email
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.email),
+                      border: OutlineInputBorder(),
                     ),
-                  );
-                },
-                child: const Text(
-                  'Password dimenticata?',
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 0, 51, 102), // Colore blu scuro
-                    fontSize: 14,
+                    enabled: !_isLoading, // Disabilita durante il caricamento
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
-            // Caricamento o bottone di login
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Color.fromARGB(255, 255, 255, 255),
-                      backgroundColor: Color.fromARGB(255, 0, 51,
-                          102), // Cambia 'primary' con 'backgroundColor'
+                  // Campo Password
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: Icon(Icons.lock),
+                      border: OutlineInputBorder(),
                     ),
-                    child: const Text('Accedi', style: TextStyle(fontSize: 18)),
+                     enabled: !_isLoading, // Disabilita durante il caricamento
                   ),
-            const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
-            // Naviga alla pagina di registrazione
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  foregroundColor: Color.fromARGB(255, 255, 255, 255),
-                  backgroundColor: const Color.fromARGB(255, 235, 173, 61)),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SignUpPage(),
+                  // Link Password Dimenticata
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _isLoading ? null : _navigateToPasswordReset,
+                      child: const Text('Password dimenticata?'),
+                    ),
                   ),
-                );
-              },
-              child: const Text('Registrati', style: TextStyle(fontSize: 18)),
-            ),
-            const SizedBox(height: 20),
+                  const SizedBox(height: 16), // Spazio aggiustato
 
-            // Pulsante per accedere con Google
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Colore di sfondo bianco
-                //  onPrimary: Colors.black, // Colore del testo
-                side: BorderSide(color: Colors.black), // Bordo
+                  // Messaggio di Errore
+                  if (_errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                   // Indicatore di Caricamento centrale (visibile solo se _isLoading è true)
+                   if (_isLoading)
+                     const Padding(
+                       padding: EdgeInsets.symmetric(vertical: 16.0),
+                       child: Center(child: CircularProgressIndicator()),
+                     ),
+                   // Nascondi i bottoni se sta caricando
+                   if (!_isLoading) ...[
+                     // Bottone Accedi
+                     ElevatedButton(
+                       onPressed: _login, // _isLoading già gestito all'interno
+                       style: ElevatedButton.styleFrom(
+                         backgroundColor: const Color.fromARGB(255, 0, 51, 102),
+                         foregroundColor: Colors.white,
+                         padding: const EdgeInsets.symmetric(vertical: 16),
+                         textStyle: const TextStyle(fontSize: 18),
+                       ),
+                       child: const Text('Accedi'),
+                     ),
+                     const SizedBox(height: 12),
+
+                     // Bottone Registrati
+                     ElevatedButton(
+                       onPressed: _navigateToSignUp, // _isLoading già gestito all'interno
+                       style: ElevatedButton.styleFrom(
+                         backgroundColor: const Color.fromARGB(255, 235, 173, 61),
+                         foregroundColor: Colors.white,
+                         padding: const EdgeInsets.symmetric(vertical: 16),
+                         textStyle: const TextStyle(fontSize: 18),
+                       ),
+                       child: const Text('Registrati'),
+                     ),
+                     const SizedBox(height: 24),
+
+                     // Divisore "O"
+                     Row(
+                       children: const [
+                         Expanded(child: Divider()),
+                         Padding(
+                           padding: EdgeInsets.symmetric(horizontal: 8.0),
+                           child: Text('O'),
+                         ),
+                         Expanded(child: Divider()),
+                       ],
+                     ),
+                     const SizedBox(height: 24),
+
+                     // Bottone Accedi con Google
+                     OutlinedButton.icon(
+                       onPressed: _loginWithGoogle, // _isLoading già gestito all'interno
+                       icon: Image.asset(
+                         'assets/images/google_logo.png', // Assicurati che il path sia corretto
+                         height: 24.0,
+                       ),
+                       label: const Text(
+                         'Accedi con Google',
+                         style: TextStyle(fontSize: 18, color: Colors.black87),
+                       ),
+                       style: OutlinedButton.styleFrom(
+                         padding: const EdgeInsets.symmetric(vertical: 16),
+                         side: const BorderSide(color: Colors.grey),
+                       ),
+                     ),
+                   ], // Fine della sezione visibile solo se !_isLoading
+                   const SizedBox(height: 20),
+                ],
               ),
-              onPressed: _loginWithGoogle,
-              icon: Image.asset('assets/images/google_logo.png',
-                  height: 24), // Aggiungi l'icona di Google
-              label: const Text('Accedi con Google',
-                  style: TextStyle(fontSize: 18, color: Colors.black)),
             ),
-            const SizedBox(height: 20),
-
-            // Mostra l'errore se presente
-            Text(
-              _errorMessage,
-              style: const TextStyle(color: Colors.red, fontSize: 16),
-            ),
-          ],
+          ),
         ),
       ),
     );

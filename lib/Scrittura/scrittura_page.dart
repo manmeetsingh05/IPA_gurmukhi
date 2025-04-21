@@ -16,12 +16,12 @@ class _ScritturaPageState extends State<ScritturaPage> {
     return Scaffold(
       appBar: AppBarTitle("Scrittura"),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(10.0),
         child: GridView.builder(
           itemCount: punjabiAlphabet.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 10,
+            crossAxisCount: 5,
+            crossAxisSpacing: 5,
             mainAxisSpacing: 10,
             childAspectRatio: 1,
           ),
