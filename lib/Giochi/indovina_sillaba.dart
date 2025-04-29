@@ -362,7 +362,7 @@ class _Sillable2State
                                                   minimumSize: const Size(210, 55), // Leggermente più stretto
                                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                                   elevation: 5,
-                                                  shadowColor: Colors.black38,
+                                                  shadowColor: Colors.black,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(14),
                                                   ),
@@ -370,6 +370,7 @@ class _Sillable2State
                                                 child: Text(
                                                   pronunciation,
                                                   style: textTheme.titleMedium?.copyWith(
+                                                      color: Colors.white,
                                                       fontWeight: FontWeight.w600,
                                                       fontSize: 18 // Dimensione font esplicita
                                                   ),

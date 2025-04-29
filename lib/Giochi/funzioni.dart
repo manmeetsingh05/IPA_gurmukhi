@@ -4,13 +4,14 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:impara_gurbani/Tema.dart'; // Importa il tuo tema
-import 'package:impara_gurbani/Metodi.dart'; // Per CircularTimer, AppBarTitle
 
 // --- Costanti e Helper ---
 const double GAME_DURATION = 15.0; // Durata del timer in secondi
 const String MAX_SCORE_PAROLA_PATH = 'MaxParola';
 const String MAX_SCORE_SILLABA_PATH = 'MaxSillabe';
 const String MAX_SCORE_SILLABA2_PATH = 'MaxSillabe2';
+const String MAX_SCORE_PRONUNCIA = 'MaxPronuncia';
+
 // --- Servizi (Logica Non-UI) ---
 
 class AudioService {
@@ -63,6 +64,9 @@ class ScoreService {
     if (user != null) {
       DatabaseReference ref = _database.ref('users/${user.uid}/$gameScorePath');
       final snapshot = await ref.get();
+
+
+      
       print('users/${user.uid}/$gameScorePath');
 
       if (snapshot.exists) {

@@ -13,7 +13,6 @@ import 'package:impara_gurbani/Metodi.dart'; // Per AppBarTitle, ScoreTimerBar, 
 // import 'package:impara_gurbani/Tema.dart'; // Se necessario
 
 // Definisci la costante del path (come negli altri esempi)
-const String MAX_SCORE_PAROLA_PATH = 'Giochi/IndovinaParola/maxScore'; // O il path corretto
 
 class IndovinaParolaPage extends StatefulWidget {
   @override

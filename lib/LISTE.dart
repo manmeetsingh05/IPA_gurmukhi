@@ -1414,10 +1414,9 @@ final Map<String, List<Rect>> letterCheckpoints = {
     Rect.fromLTWH(624, 892, 140, 140), // Centro (694, 962)
     Rect.fromLTWH(551, 766, 140, 140), // Centro (621, 836)
     Rect.fromLTWH(942, 547, 140, 140), // Centro (1012, 617)
-    Rect.fromLTWH(944, 1005, 140, 140), // Centro (1014, 1075)
     Rect.fromLTWH(
         930, 216, 140, 140), // Centro (1000, 286) // Verificato centro
-    Rect.fromLTWH(1066, 213, 140, 140), // Centro (1136, 283)
+    Rect.fromLTWH(944, 1005, 140, 140), // Centro (1014, 1075)
   ],
   "ੲ": [
     // Lato 140
@@ -1476,13 +1475,13 @@ final Map<String, List<Rect>> letterCheckpoints = {
     // Lato 140
     Rect.fromLTWH(128, 213, 140, 140), // Centro (198, 283)
     Rect.fromLTWH(947, 214, 140, 140), // Centro (1017, 284)
-    Rect.fromLTWH(945, 541, 140, 140), // Centro (1015, 611)
-    Rect.fromLTWH(959, 1023, 140, 140), // Centro (1029, 1093)
     Rect.fromLTWH(660, 265, 140, 140), // Centro (730, 335)
     Rect.fromLTWH(645, 958, 140, 140), // Centro (715, 1028)
     Rect.fromLTWH(274, 918, 140, 140), // Centro (344, 988)
     Rect.fromLTWH(256, 604, 140, 140), // Centro (326, 674)
     Rect.fromLTWH(662, 561, 140, 140), // Centro (732, 631)
+    Rect.fromLTWH(945, 541, 140, 140), // Centro (1015, 611)
+    Rect.fromLTWH(959, 1023, 140, 140), // Centro (1029, 1093)
   ],
   "ਘ": [
     // Lato 140
@@ -1630,16 +1629,18 @@ final Map<String, List<Rect>> letterCheckpoints = {
     Rect.fromLTWH(234, 1279, 140, 140), // Centro (304, 1349)
   ],
   "ਥ": [
-    Rect.fromLTWH(110, 287, 140, 140), // Centro (180, 357)
-    Rect.fromLTWH(902, 297, 140, 140), // Centro (972, 367)
-    Rect.fromLTWH(936, 528, 140, 140), // Centro (1006, 598)
-    Rect.fromLTWH(916, 1319, 140, 140), // Centro (986, 1389)
-    Rect.fromLTWH(344, 353, 140, 140), // Centro (414, 423)
-    Rect.fromLTWH(322, 906, 140, 140), // Centro (382, 976)
-    Rect.fromLTWH(591, 1106, 140, 140), // Centro (661, 1176)
-    Rect.fromLTWH(852, 1019, 140, 140), // Centro (922, 1089)
-    Rect.fromLTWH(457, 686, 140, 140), // Centro (527, 756)
-    Rect.fromLTWH(849, 679, 140, 140), // Centro (919, 749)
+    Rect.fromLTWH(110, 287, 140, 140), // 1
+    Rect.fromLTWH(344, 353, 140, 140), // 2
+    Rect.fromLTWH(322, 906, 140, 140), // 3
+    Rect.fromLTWH(591, 1106, 140, 140), // 4
+    Rect.fromLTWH(852, 1019, 140, 140), // 5
+    Rect.fromLTWH(936, 528, 140, 140), // 6
+    Rect.fromLTWH(902, 297, 140, 140), // 7
+    Rect.fromLTWH(916, 1319, 140, 140), // 8
+    Rect.fromLTWH(457, 686, 140, 140), // 9
+    Rect.fromLTWH(849, 679, 140, 140), // 10
+    Rect.fromLTWH(386, 320, 140, 140),
+    Rect.fromLTWH(1092, 320, 140, 140),
   ],
   "ਦ": [
     Rect.fromLTWH(101, 270, 140, 140), // Centro (171, 340)
@@ -1653,13 +1654,15 @@ final Map<String, List<Rect>> letterCheckpoints = {
   ],
   "ਧ": [
     Rect.fromLTWH(135, 299, 140, 140), // Centro (205, 369)
-    Rect.fromLTWH(921, 308, 140, 140), // Centro (991, 378)
-    Rect.fromLTWH(912, 765, 140, 140), // Centro (982, 835)
-    Rect.fromLTWH(921, 1329, 140, 140), // Centro (991, 1399)
-    Rect.fromLTWH(352, 370, 140, 140), // Centro (422, 440)
+    Rect.fromLTWH(352, 370, 140, 140), // 2
     Rect.fromLTWH(326, 919, 140, 140), // Centro (396, 989)
     Rect.fromLTWH(603, 1106, 140, 140), // Centro (673, 1176)
     Rect.fromLTWH(856, 1029, 140, 140), // Centro (926, 1099)
+    Rect.fromLTWH(912, 765, 140, 140), // 6
+    Rect.fromLTWH(921, 308, 140, 140), // 7
+    Rect.fromLTWH(921, 1329, 140, 140), // 8
+    Rect.fromLTWH(356, 310, 140, 140),
+    Rect.fromLTWH(978, 310, 140, 140),
   ],
   "ਨ": [
     Rect.fromLTWH(90, 270, 140, 140), // Centro (160, 340)
@@ -1691,14 +1694,15 @@ final Map<String, List<Rect>> letterCheckpoints = {
   ],
   "ਬ": [
     Rect.fromLTWH(169, 300, 140, 140), // Centro (239, 370)
-    Rect.fromLTWH(931, 289, 140, 140), // Centro (1001, 359)
-    Rect.fromLTWH(918, 715, 140, 140), // Centro (988, 785)
-    Rect.fromLTWH(922, 1314, 140, 140), // Centro (992, 1384)
-    Rect.fromLTWH(264, 351, 140, 140), // Centro (334, 421)
+    Rect.fromLTWH(931, 289, 140, 140), // 2
+    Rect.fromLTWH(264, 351, 140, 140), // 3
     Rect.fromLTWH(497, 669, 140, 140), // Centro (557, 739)
     Rect.fromLTWH(839, 723, 140, 140), // Centro (909, 793)
     Rect.fromLTWH(301, 924, 140, 140), // Centro (371, 994)
     Rect.fromLTWH(851, 1126, 140, 140), // Centro (921, 1186)
+    Rect.fromLTWH(918, 715, 140, 140), // 8
+    Rect.fromLTWH(931, 310, 140, 140),
+    Rect.fromLTWH(922, 1314, 140, 140), // 10
   ],
   "ਭ": [
     Rect.fromLTWH(118, 311, 140, 140), // Centro (188, 381)
@@ -1724,14 +1728,16 @@ final Map<String, List<Rect>> letterCheckpoints = {
   ],
   "ਯ": [
     Rect.fromLTWH(86, 247, 140, 140), // Centro (156, 317)
-    Rect.fromLTWH(943, 234, 140, 140), // Centro (1013, 304)
-    Rect.fromLTWH(939, 649, 140, 140), // Centro (1009, 719)
-    Rect.fromLTWH(933, 1108, 140, 140), // Centro (1003, 1178)
-    Rect.fromLTWH(286, 286, 140, 140), // Centro (356, 356)
+    Rect.fromLTWH(286, 286, 140, 140), // 2
     Rect.fromLTWH(269, 794, 140, 140), // Centro (339, 864)
     Rect.fromLTWH(617, 940, 140, 140), // Centro (687, 1010)
     Rect.fromLTWH(637, 652, 140, 140), // Centro (707, 722)
     Rect.fromLTWH(883, 651, 140, 140), // Centro (953, 721)
+    Rect.fromLTWH(939, 649, 140, 140), // 7
+    Rect.fromLTWH(943, 234, 140, 140), // 8
+    Rect.fromLTWH(933, 1108, 140, 140), // 9
+    Rect.fromLTWH(281,270, 140, 140),
+    Rect.fromLTWH(1070,270, 140, 140),
   ],
   "ਰ": [
     Rect.fromLTWH(95, 299, 140, 140), // Centro (165, 369)
@@ -1747,12 +1753,13 @@ final Map<String, List<Rect>> letterCheckpoints = {
     Rect.fromLTWH(400, 468, 140, 140), // Centro (470, 538)
     Rect.fromLTWH(583, 704, 140, 140), // Centro (653, 774)
     Rect.fromLTWH(796, 293, 140, 140), // Centro (866, 363)
-    Rect.fromLTWH(742, 599, 140, 140), // Centro (812, 669)
-    Rect.fromLTWH(934, 823, 140, 140), // Centro (1004, 883)
-    Rect.fromLTWH(756, 1019, 140, 140), // Centro (826, 1089)
     Rect.fromLTWH(423, 598, 140, 140), // Centro (493, 668)
     Rect.fromLTWH(220, 816, 140, 140), // Centro (290, 886)
     Rect.fromLTWH(428, 1035, 140, 140), // Centro (498, 1105)
+    Rect.fromLTWH(742, 599, 140, 140), // Centro (812, 669)
+    Rect.fromLTWH(934, 823, 140, 140), // Centro (1004, 883)
+    Rect.fromLTWH(756, 1019, 140, 140), // Centro (826, 1089)
+    
   ],
   "ਵ": [
     Rect.fromLTWH(101, 287, 140, 140), // Centro (171, 357)
@@ -1820,12 +1827,12 @@ final Map<String, List<Rect>> letterCheckpoints = {
   "ਗ਼": [
     Rect.fromLTWH(103, 221, 140, 140), // Centro (173, 291)
     Rect.fromLTWH(935, 219, 140, 140), // Centro (1005, 289)
-    Rect.fromLTWH(954, 1024, 140, 140), // Centro (1024, 1084)
     Rect.fromLTWH(656, 260, 140, 140), // Centro (726, 330)
     Rect.fromLTWH(659, 573, 140, 140), // Centro (729, 643)
     Rect.fromLTWH(532, 1046, 140, 140), // Centro (602, 1106)
     Rect.fromLTWH(252, 598, 140, 140), // Centro (322, 668)
     Rect.fromLTWH(608, 572, 140, 140), // Centro (678, 642)
+    Rect.fromLTWH(954, 1024, 140, 140), // Centro (1024, 1084)
     Rect.fromLTWH(209, 1095, 140, 140), // Centro (279, 1165)
   ],
   "ਫ਼": [
@@ -1845,12 +1852,12 @@ final Map<String, List<Rect>> letterCheckpoints = {
     Rect.fromLTWH(442, 545, 140, 140), // Centro (512, 615)
     Rect.fromLTWH(595, 712, 140, 140), // Centro (665, 782)
     Rect.fromLTWH(826, 274, 140, 140), // Centro (866, 344)
-    Rect.fromLTWH(740, 591, 140, 140), // Centro (810, 661)
-    Rect.fromLTWH(971, 814, 140, 140), // Centro (1011, 874)
-    Rect.fromLTWH(749, 1042, 140, 140), // Centro (809, 1102)
     Rect.fromLTWH(419, 602, 140, 140), // Centro (489, 672)
     Rect.fromLTWH(223, 818, 140, 140), // Centro (293, 878)
     Rect.fromLTWH(471, 1035, 140, 140), // Centro (521, 1105)
+    Rect.fromLTWH(740, 591, 140, 140), // Centro (810, 661)
+    Rect.fromLTWH(971, 814, 140, 140), // Centro (1011, 874)
+    Rect.fromLTWH(749, 1042, 140, 140), // Centro (809, 1102)
     Rect.fromLTWH(998, 1111, 140, 140), // Centro (1068, 1181)
   ],
 };

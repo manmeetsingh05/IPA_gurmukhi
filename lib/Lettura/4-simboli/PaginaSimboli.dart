@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:impara_gurbani/LISTE.dart';
 import 'package:impara_gurbani/Metodi.dart';
 
 class DynamicSymbolPage extends StatefulWidget {

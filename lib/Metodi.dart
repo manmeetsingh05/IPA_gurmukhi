@@ -1,10 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:impara_gurbani/Tema.dart';
-
-
 
 
 class PunjabiLetterTile extends StatefulWidget {
@@ -339,7 +335,7 @@ class _PunjabiWordTileState extends State<PunjabiWordTile> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF00274D), Color(0xFF00509D)],
@@ -361,7 +357,7 @@ class _PunjabiWordTileState extends State<PunjabiWordTile> {
             borderRadius: BorderRadius.circular(20),
             splashColor: Colors.white.withOpacity(0.3),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               child: Row(
                 children: [
                   if (leading is IconData) ...[
@@ -387,7 +383,7 @@ class _PunjabiWordTileState extends State<PunjabiWordTile> {
                       ),
                     ),
                   ],
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       text,
